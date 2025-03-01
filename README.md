@@ -1,177 +1,145 @@
-# 1. مقدمة عامة عن المشروع
+# Intelligent Agent for Playing Flappy Bird using NEAT
 
-الهدف في المشروع ده إننا نبني وكيل ذكي (Intelligent Agent) يقدر يتعلّم لوحده إزاي يلعب لعبة Flappy Bird من غير ما نبرمجه بالقواعد بشكل مباشر. احنا بنستخدم خوارزمية جينية (Genetic Algorithm) بنسختها المطوّرة اللي اسمها NEAT، واللي بتساعدنا نطوّر الشبكات العصبية ونعدّل في تركيبها (Topology) أثناء عملية التطوّر.
+Developed by: 
+ - Eslam Reda Ragheb
+ - Maged Yasser wafa
 
-## فكرة اللعبة باختصار
+## 1. General Introduction to the Project
 
-لعبة Flappy Bird لعبة بسيطة، فيها اللاعب بيتحكّم في طائر صغير لازم يعدّي من بين أنابيب من غير ما يخبط فيها أو في الأرض.
+The goal of this project is to build an Intelligent Agent that can learn to play Flappy Bird on its own without being explicitly programmed with the rules. We use an advanced version of the Genetic Algorithm, called **NEAT** (NeuroEvolution of Augmenting Topologies), which helps evolve neural networks by modifying their structure (topology) during the evolution process.
 
-*   كل مرة يعدّي أنبوبة بنجاح، بيكسب نقطة.
-*   اللعبة بتنتهي لو الطائر خبط في أنبوبة أو الأرض أو خرج برا حدود الشاشة.
+### Summary of the Game Concept
 
-## فكرة الذكاء الاصطناعي في المشروع
+Flappy Bird is a simple game where the player controls a small bird that must pass between pipes without hitting them or the ground.
 
-الوكيل الذكي (AI Agent) هيجرّب يلعب اللعبة مرّات كتير.
+* Each time the bird successfully passes a pipe, the player gains a point.
+* The game ends if the bird collides with a pipe, the ground, or goes off-screen.
 
-*   في كل جيل (Generation)، عندنا مجموعة شبكات عصبية (Population) بيتطوّروا عن طريق الطفرات (Mutations) والتزاوج (Crossover) على أساس أفضل الأفراد في الجيل اللي فات.
-*   الهدف إن أداء الوكيل يتحسّن (عدد الأنابيب اللي بيعدّيها) مع مرور الأجيال لحد ما يوصل لأداء ممتاز أو حتى مثالي.
+### AI Concept in the Project
 
----
+The AI Agent will repeatedly attempt to play the game.
 
-# 2. مفهوم PEAS
-
-"**PEAS**" اختصار لأربع عناصر بتعرّف مكوّنات تصميم أي وكيل (Agent) في مجال الذكاء الاصطناعي:
-
-## 1. Performance Measure (مقياس الأداء)
-
-إزاي بنقيس أداء الوكيل؟
-
-في Flappy Bird، المقياس الأساسي هو عدد الأنابيب اللي الوكيل بيعدّيها قبل ما يخبط أو يخرج برا الشاشة.
-
-ممكن نضيف مقاييس تانية زي مدة بقاء الطائر من غير ما يخسر، بس غالبًا العدد النهائي للأنابيب هو الأهم.
-
-## 2. Environment (البيئة)
-
-البيئة هي العالم اللي الوكيل شغال فيه.
-
-في حالتنا دي لعبة Flappy Bird: شاشة، أنابيب بتتحرّك، الجاذبية بتشدّ الطائر لتحت، إلخ.
-
-البيئة بتتحدّث مع الوقت (الأنابيب بتتحرك، الطائر بيقع بفعل الجاذبية).
-
-## 3. Actuators (الأفعال)
-
-دي الحركات أو الأوامر اللي الوكيل بيعملها عشان يأثر على البيئة.
-
-في Flappy Bird، الفعل الأساسي هو إن الطائر يقفز (Jump/Flap). وفيه فعل ضمني إن الطائر ما يقفزش (يكمل سقوط).
-
-## 4. Sensors (المستشعرات)
-
-المعلومات اللي الوكيل بياخدها من البيئة.
-
-في Flappy Bird، أهم حاجة: موقع الطائر (Y)، مكان أقرب أنبوبة (الفتحة العلوية والسفلية)، والمسافة الأفقية للأنبوبة اللي جاية.
-
-المعلومات دي بتتبعَت للشبكة العصبية عشان تحدد إذا كان الطائر يقفز ولا لأ.
+* In each generation, a population of neural networks evolves through mutations and crossovers, based on the best-performing individuals from the previous generation.
+* The goal is for the agent to improve over generations (by passing more pipes) until it reaches an optimal or near-perfect performance.
 
 ---
 
-# 3. خصائص البيئة (ODESDA)
+## 2. PEAS Concept
 
-"**ODESDA**" بتوصف طبيعة البيئة اللي الوكيل الذكي بيتعامل معاها:
+**"PEAS"** stands for four key components that define an AI agent’s design:
 
-## 1. O: Observable (ملاحظ بالكامل) أو Partially Observable (ملاحظ جزئيًا)
+1. **Performance Measure**
+    * How do we evaluate the agent’s performance?
+    * In Flappy Bird, the primary metric is the number of pipes passed before failing.
+    * Additional metrics could include the time survived without failing, but the number of pipes passed is usually the most important.
 
-هل الوكيل شايف كل حاجة في البيئة ولا لأ؟
+2. **Environment**
+    * The environment is the world in which the agent operates.
+    * In this case, it’s the Flappy Bird game: the screen, moving pipes, gravity pulling the bird downward, etc.
+    * The environment changes over time (pipes move, and gravity affects the bird’s movement).
 
-ممكن ندي الوكيل معظم المعلومات المهمة (زي موقع الطائر والأنابيب)، فلو وفّرنا كل اللي يلزم للعب تبقى البيئة شبه ملاحظَة بالكامل.
+3. **Actuators (Actions)**
+    * These are the actions the agent takes to affect the environment.
+    * In Flappy Bird, the primary action is jumping (flap).
+    * Another implicit action is not jumping (letting the bird fall).
 
-## 2. D: Deterministic (حتمية) أو Stochastic (احتمالية)
-
-هل نفس الأفعال بتدي نفس النتايج دايمًا ولا فيه عشوائية؟
-
-Flappy Bird غالبًا حتمية لو كل الظروف ثابتة، بس ممكن تبقى احتمالية لو أماكن الأنابيب بتتغيّر بشكل عشوائي.
-
-## 3. E: Episodic (حلقات) أو Sequential (تتابعية)
-
-Episodic يعني كل حلقة مستقلة عن التانية، وSequential يعني القرارات بتأثر في بعض.
-
-اللعبة تعتبر Episodic على مستوى كل محاولة (بتبدأ وتنتهي)، لكن جوا الحلقة الواحدة القرارات مرتبطة ببعض.
-
-## 4. S: Static (ساكنة) أو Dynamic (ديناميكية)
-
-البيئة الديناميكية بتتغير أثناء ما الوكيل بياخد قراراته.
-
-Flappy Bird بيئتها ديناميكية عشان الأنابيب بتتحرك والطائر بيقع بالجاذبية.
-
-## 5. D: Discrete (منفصلة) أو Continuous (مستمرة)
-
-هل حالات البيئة وأفعال الوكيل محدودة ولا متصلة؟
-
-الأفعال في Flappy Bird منفصلة (قفزة أو لأ)، بس الإحداثيات ممكن تتعامل كقيم مستمرة.
-
-## 6. A: Single agent (وكيل واحد) أو Multi-agent (متعدد الوكلاء)
-
-عندنا وكيل واحد بس (الطائر)، فبالتالي Single Agent.
-
-## باختصار:
-
-*   **Observability**: شبه كاملة.
-*   **Deterministic/Stochastic**: شبه حتمية مع شوية عشوائية في ترتيب الأنابيب.
-*   **Episodic/Sequential**: حلقات متعددة وكل حلقة فيها تتابع قرارات.
-*   **Static/Dynamic**: البيئة ديناميكية.
-*   **Discrete/Continuous**: الفعل منفصل (قفزة/لا)، بس الحالة شبه مستمرة.
-*   **Single/Multi-agent**: وكيل واحد.
+4. **Sensors (Inputs)**
+    * These are the data the agent receives from the environment.
+    * In Flappy Bird, the key inputs are:
+        * Bird’s position (Y coordinate)
+        * Location of the nearest pipe’s opening (top and bottom)
+        * Horizontal distance to the upcoming pipe
+    * This information is fed into the neural network, which decides whether the bird should jump or not.
 
 ---
 
-# 4. آليّة عمل خوارزميّة NEAT
+## 3. Environment Properties (ODESDA)
 
-**NEAT** اختصار لـ **NeuroEvolution of Augmenting Topologies**، وهي خوارزمية جينية (Genetic Algorithm) مخصصة لتطوير الشبكات العصبية. مش بس بتطوّر أوزان الوصلات بين الخلايا العصبية، لكن كمان بتطوّر هيكل الشبكة نفسها (عدد الخلايا وعدد الوصلات) عن طريق الطفرات.
+**"ODESDA"** describes the nature of the environment the intelligent agent interacts with.
 
-## المراحل الأساسية في NEAT
+1. **O: Observable vs. Partially Observable**
+    * Can the agent see everything in the environment?
+    * We provide the agent with most of the key information (bird and pipe positions).
+    * If all relevant data is available, the environment is almost fully observable.
 
-### 1. التهيئة (Initialization)
+2. **D: Deterministic vs. Stochastic**
+    * Do the same actions always lead to the same outcomes?
+    * Flappy Bird is mostly deterministic if all conditions are fixed,
+    * but it can be stochastic if pipe placements are randomized.
 
-بننشئ مجموعة أفراد (Population)، هنا مثلًا الحجم بتاعنا (`pop_size`) = 50 شبكة عصبية في كل جيل.
+3. **E: Episodic vs. Sequential**
+    * Are decisions independent (Episodic) or do they affect each other over time (Sequential)?
+    * The game is episodic at the level of each attempt (start and end separately),
+    * but within an episode, decisions are sequential (previous jumps affect the next moves).
 
-كل شبكة بتبدأ بتركيب بسيط (مثلاً عدد محدود من الوصلات) و`initial_connection` في الإعدادات هنا = "full"، يعني في البداية كل المدخلات متوصلة بالمخرجات.
+4. **S: Static vs. Dynamic**
+    * Does the environment change while the agent is deciding?
+    * Flappy Bird’s environment is dynamic because pipes move, and the bird falls due to gravity.
 
-### 2. التقييم (Evaluation)
+5. **D: Discrete vs. Continuous**
+    * Are the states and actions fixed or continuous?
+    * The actions are discrete (jump or don’t jump).
+    * The positions can be treated as continuous values.
 
-بنختبر كل شبكة (فرد) في لعبة Flappy Bird عشان نعرف أدائها (**Fitness**).
+6. **A: Single-agent vs. Multi-agent**
+    * Are there multiple agents interacting or just one?
+    * There is only one agent (the bird), so it is a single-agent environment.
 
-الـ**Fitness** بيتحسب بناءً على عدد الأنابيب اللي الطائر عدّاها، ولو الشبكة وصلت لمستوى معين (`fitness_threshold` = 100) ممكن نعتبر إننا حققنا الهدف.
+### Summary:
 
-### 3. الانتقاء (Selection)
-
-بنختار أحسن الشبكات على أساس الـ**Fitness** عشان نستخدمها في الجيل الجديد.
-
-في الإعدادات فيه حاجات زي (`elitism`=2) و(`survival_threshold`=0.2) بتحدد إزاي بنختار أفضل الأفراد.
-
-### 4. التزاوج (Crossover)
-
-بنخلط جينات شبكتين (أبوين) عشان نطلع شبكة جديدة (ابن) تجمع صفاتهم.
-
-وده بيحصل بعد الانتقاء عشان ننتج الجيل الجديد.
-
-### 5. الطفرة (Mutation)
-
-بنضيف تغييرات عشوائية على الأوزان أو بنية الشبكة، زي (`conn_add_prob`=0.5) و(`conn_delete_prob`=0.5) اللي بتحدد احتمالية إضافة أو حذف وصلات.
-
-فيه كمان (`node_add_prob`=0.2) و(`node_delete_prob`=0.2) عشان نتحكم في إضافة/حذف الخلايا العصبية.
-
-كمان بنعدل في الأوزان نفسها (`weight_mutate_rate`=0.8) وبنسبة (`weight_replace_rate`=0.1) ممكن نستبدل الوزن بالكامل.
-
-### 6. التخصّص (Speciation)
-
-بنقسم الأفراد لمجموعات فرعية (**Species**) عشان نحافظ على التنوع ومايبقاش فيه سلالة واحدة بس مهيمنة.
-
-(`compatibility_threshold`=3.0) بتحدد الحد اللي بنقرر عنده إن الشبكات قريبة لبعض أو مختلفة.
-
-### 7. تكرار العملية
-
-بنرجع نعمل تقييم للجيل الجديد، ثم انتقاء وتزاوج وطفرة... لحد ما نوصل لأداء كويس أو نوصل لعدد أجيال معين.
-
-(`max_stagnation`=20) مثلًا بيخلينا نوقف لو الجيل مايتحسّنش لفترة طويلة.
+* **Observability:** Almost fully observable.
+* **Deterministic/Stochastic:** Mostly deterministic with some randomness in pipe placement.
+* **Episodic/Sequential:** Multiple episodes, with sequential decision-making in each.
+* **Static/Dynamic:** Dynamic environment.
+* **Discrete/Continuous:** Discrete actions (jump/not jump), but states are continuous.
+* **Single/Multi-agent:** Single agent.
 
 ---
 
-# 5. أهم إعدادات ملف الـConfig 
+## 4. How NEAT Algorithm Works
 
-*   `fitness_criterion = max`: **مقياس اللياقة**: بنعتمد على أعلى لياقة (أعلى أداء).
-*   `fitness_threshold = 100`: **حد اللياقة**: لو وصلنا للـFitness دي أو أكتر، يبقى الوكيل حقق المطلوب.
-*   `pop_size = 50`: **حجم المجتمع**: عدد الشبكات في كل جيل.
-*   `activation_default = tanh`: **دالة التنشيط الافتراضية**: الدوال اللي بتفعّل الخلايا العصبية هي tanh في الوضع الافتراضي.
-*   `bias_mutate_rate = 0.7`, `weight_mutate_rate = 0.8`: **معدل طفرة الانحياز والوزن**: نسب الطفرة في الـbias والأوزان.
-*   `conn_add_prob = 0.5`, `conn_delete_prob = 0.5`: **احتمالية إضافة/حذف وصلة**: احتمالية إضافة أو حذف وصلات.
-*   `node_add_prob = 0.2`, `node_delete_prob = 0.2`: **احتمالية إضافة/حذف خلية عصبية**: احتمالية إضافة أو حذف خلايا عصبية.
-*   `compatibility_threshold = 3.0`: **حد التوافق**: الحد اللي بنقسّم على أساسه الأنواع (Speciation).
-*   `elitism = 2`: **النخبوية**: عدد الأفراد اللي بنحتفظ بيهم من كل نوع (Species) من غير تغييرات.
-*   `survival_threshold = 0.2`: **حد البقاء**: نسبة الأفراد اللي بنخليها تعيش من كل نوع.
+**NEAT** (NeuroEvolution of Augmenting Topologies) is a Genetic Algorithm designed to evolve neural networks.
+It doesn’t just optimize the connection weights but also evolves the network structure (adding/removing neurons and connections) through mutations.
+
+### Main Stages of NEAT
+
+1. **Initialization**
+    * We create a population of neural networks (`pop_size = 50` per generation).
+    * Each network starts with a simple structure.
+    * The setting `initial_connection = full` means all inputs are initially connected to outputs.
+
+2. **Evaluation**
+    * Each network (agent) plays Flappy Bird to measure its fitness.
+    * Fitness is calculated based on pipes passed.
+    * If an agent reaches a threshold (`fitness_threshold = 100`), it is considered successful.
+
+3. **Selection**
+    * The best networks are selected based on fitness to be used in the next generation.
+    * Parameters like `elitism = 2` and `survival_threshold = 0.2` determine how many best-performing agents survive.
+
+4. **Crossover (Breeding)**
+    * The genetic information of two top-performing networks (parents) is combined to create a new network (offspring).
+
+5. **Mutation**
+    * Random modifications occur to:
+        * Connection weights (`weight_mutate_rate = 0.8`, `weight_replace_rate = 0.1`).
+        * Adding/removing connections (`conn_add_prob = 0.5`, `conn_delete_prob = 0.5`).
+        * Adding/removing neurons (`node_add_prob = 0.2`, `node_delete_prob = 0.2`).
+
+6. **Speciation**
+    * Networks are grouped into species to preserve diversity and prevent premature convergence.
+    * The `compatibility_threshold = 3.0` defines how different networks must be to belong to separate species.
+
+7. **Repeat the Process**
+    * The new generation is evaluated, selected, mutated, and bred again.
+    * If the performance stagnates for too long (`max_stagnation = 20`), the process stops.
 
 ---
 
-# 6. الخاتمة
+## 5. Conclusion
 
-باستخدام خوارزمية NEAT مع لعبة Flappy Bird، هنقدر نشوف إزاي نعمل وكيل ذكي بيتعلم بنفسه من خلال التجارب المتكررة، وبيطوّر تركيب الشبكة العصبية بتاعته بشكل شبه التطوّر الطبيعي. مفهوم PEAS بيوضح لنا إزاي نحدد مقياس الأداء والبيئة والمستشعرات والأفعال، وODESDA بيشرح طبيعة البيئة وتأثيرها على الوكيل وطريقة تعلّمه.
+By using the **NEAT** algorithm with Flappy Bird, we can create an intelligent agent that learns through repeated trials, improving its neural network structure naturally.
 
-أما ملف الـConfig فبيخلينا نتحكم في كل التفاصيل زي حجم المجتمع (Population) ونسب الطفرة والتزاوج وحدود التوافق بين الشبكات (Speciation). المشروع ده مثال عملي لطيف بيربط مبادئ الذكاء الاصطناعي (التعلم التطوري والشبكات العصبية) بلعبة بسيطة، وبيسهل علينا نفهم إزاي الخوارزميات دي بتشتغل في بيئة تفاعلية.
+The **PEAS** framework helps us understand the agent’s performance, environment, actions, and sensors, while **ODESDA** explains the nature of the environment and its impact on learning.
+
+With a well-configured **NEAT** system, we control population size, mutation rates, crossover mechanisms, and species differentiation, making this project a practical example of AI-driven neuroevolution in a simple interactive game.
